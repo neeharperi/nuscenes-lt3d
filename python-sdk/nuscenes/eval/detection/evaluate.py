@@ -88,7 +88,7 @@ class DetectionEval:
                  result_path: str,
                  eval_set: str,
                  output_dir: str = None,
-                 metric: str = "hierarchy",
+                 metric_type: str = "hierarchy",
                  verbose: bool = True):
         """
         Initialize a DetectionEval object.
@@ -105,7 +105,7 @@ class DetectionEval:
         self.output_dir = output_dir
         self.verbose = verbose
         self.cfg = config
-        self.metric = metric
+        self.metric = metric_type
 
         # Check result file exists.
         assert os.path.exists(result_path), 'Error: The result file does not exist!'
