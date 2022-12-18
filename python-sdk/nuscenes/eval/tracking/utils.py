@@ -25,17 +25,30 @@ def category_to_tracking_name(category_name: str) -> Optional[str]:
     :return: nuScenes tracking class.
     """
     tracking_mapping = {
-        'vehicle.bicycle': 'bicycle',
-        'vehicle.bus.bendy': 'bus',
-        'vehicle.bus.rigid': 'bus',
-        'vehicle.car': 'car',
-        'vehicle.motorcycle': 'motorcycle',
-        'human.pedestrian.adult': 'pedestrian',
-        'human.pedestrian.child': 'pedestrian',
-        'human.pedestrian.construction_worker': 'pedestrian',
-        'human.pedestrian.police_officer': 'pedestrian',
-        'vehicle.trailer': 'trailer',
-        'vehicle.truck': 'truck'
+        'vehicle.car': 'car', 
+        'vehicle.bus.bendy': 'bus', 
+        'vehicle.bus.rigid': 'bus', 
+        'vehicle.truck': 'truck', 
+        'vehicle.construction': 'construction_vehicle',
+        'vehicle.emergency.ambulance': 'emergency_vehicle', 
+        'vehicle.emergency.police': 'emergency_vehicle', 
+        'vehicle.trailer': 'trailer', 
+        'vehicle.motorcycle': 'motorcycle', 
+        'vehicle.bicycle': 'bicycle', 
+
+        'human.pedestrian.adult': 'adult', 
+        'human.pedestrian.child': 'child', 
+        'human.pedestrian.police_officer': 'police_officer', 
+        'human.pedestrian.construction_worker': 'construction_worker', 
+        'human.pedestrian.personal_mobility': 'personal_mobility', 
+        'human.pedestrian.wheelchair': 'ignore',
+        'human.pedestrian.stroller': 'stroller',
+
+
+        'movable_object.pushable_pullable': 'pushable_pullable',
+        'movable_object.debris': 'debris', 
+        'movable_object.barrier': 'barrier', 
+        'movable_object.trafficcone': 'traffic_cone', 
     }
 
     if category_name in tracking_mapping:
