@@ -1,0 +1,40 @@
+{
+  "class_range": {
+    "car": 25,
+    "truck": 25,
+    "bus": 25,
+    "trailer": 25,
+    "construction_vehicle": 25,
+    "emergency_vehicle": 25,
+    "adult": 25,
+    "child": 25,
+    "police_officer": 25,
+    "construction_worker": 25,
+    "motorcycle": 25,
+    "bicycle": 25,
+    "personal_mobility": 25,
+    "pushable_pullable": 25,
+    "stroller": 25,
+    "barrier": 25,
+    "traffic_cone": 25,
+    "debris": 25
+  },
+  "hierarchy": {
+    "finegrain": ["car", "truck", "trailer", "bus", "construction_vehicle", "bicycle", "motorcycle", "emergency_vehicle", 
+                  "adult", "child", "construction_worker", "police_officer", "stroller", "personal_mobility", 
+                  "barrier", "traffic_cone", "debris", "pushable_pullable"],
+    "group": ["vehicle", "vehicle", "vehicle", "vehicle", "vehicle", "vehicle", "vehicle", "vehicle", 
+              "pedestrian", "pedestrian", "pedestrian", "pedestrian", "pedestrian", "pedestrian", 
+              "movable", "movable", "movable", "movable"],
+    "object": ["object", "object", "object", "object", "object", "object", "object", "object", 
+               "object", "object", "object", "object", "object", "object", 
+               "object", "object", "object", "object"]
+  },
+  "dist_fcn": "center_distance",
+  "dist_ths": [[0.5, 0], [1.0, 0], [2.0, 0], [4.0, 0]],
+  "dist_th_tp": 2.0,
+  "min_recall": 0,
+  "min_precision": 0,
+  "max_boxes_per_sample": 500,
+  "mean_ap_weight": 5
+}

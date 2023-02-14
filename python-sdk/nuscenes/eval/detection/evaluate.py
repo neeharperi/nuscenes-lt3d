@@ -88,7 +88,7 @@ class DetectionEval:
                  result_path: str,
                  eval_set: str,
                  output_dir: str = None,
-                 metric_type: str = "hierarchy",
+                 metric_type: str = "standard",
                  verbose: bool = True):
         """
         Initialize a DetectionEval object.
