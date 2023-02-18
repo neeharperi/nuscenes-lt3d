@@ -121,8 +121,6 @@ def accumulate(gt_boxes: EvalBoxes,
         # If the closest match is close enough according to threshold we have a match!
         is_match = min_dist < dist_th
 
-        is_match = min_dist < dist_th 
-
         for gt_idx, gt_box in enumerate(gt_boxes[pred_box.sample_token]):
             gt_ind = hierarchy["finegrain"].index(gt_box.detection_name)
             gt_semantic_hierarchy = hierarchy["finegrain"][gt_ind], hierarchy["group"][gt_ind], hierarchy["object"][gt_ind]
