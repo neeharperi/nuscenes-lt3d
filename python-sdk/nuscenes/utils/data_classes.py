@@ -179,6 +179,28 @@ class PointCloud(ABC):
         """
         self.points[:3, :] = transf_matrix.dot(np.vstack((self.points[:3, :], np.ones(self.nbr_points()))))[:3, :]
 
+
+    def render_height_with_new_pts(self,
+                      ax: Axes,
+                      inlier_pts,
+                      inlier_color,
+                      outlier_pts,
+                      outlier_color,
+                      view: np.ndarray = np.eye(4),
+                      render_lidar_pts = True,
+                      x_lim: Tuple[float, float] = (-30, 30),
+                      y_lim: Tuple[float, float] = (-30, 30),
+                      marker_size: float = 1) -> None:
+        """
+        Very simple method that applies a transformation and then scatter plots the points colored by height (z-value).
+        :param ax: Axes on which to render the points.
+        :param view: <np.float: n, n>. Defines an arbitrary projection (n <= 4).
+        :param x_lim: (min, max). x range for plotting.
+        :param y_lim: (min, max). y range for plotting.
+        :param marker_size: Marker size.
+        """
+        self._render_helper_with_new_pts(2, ax, view, inlier_pts, inlier_color, outlier_pts, outlier_color, render_lidar_pts,x_lim, y_lim, marker_size)
+
     def render_height(self,
                       ax: Axes,
                       view: np.ndarray = np.eye(4),
@@ -229,6 +251,47 @@ class PointCloud(ABC):
         """
         points = view_points(self.points[:3, :], view, normalize=False)
         ax.scatter(points[0, :], points[1, :], c=self.points[color_channel, :], s=marker_size)
+        ax.set_xlim(x_lim[0], x_lim[1])
+        ax.set_ylim(y_lim[0], y_lim[1])
+
+    def _render_helper_with_new_pts(self,
+                       color_channel: int,
+                       ax: Axes,
+                       view: np.ndarray,
+                       inlier_pts, 
+                       inlier_color, 
+                       outlier_pts,
+                       outlier_color,
+                       render_lidar_pts,
+                       x_lim: Tuple[float, float],
+                       y_lim: Tuple[float, float],
+                       marker_size: float) -> None:
+        """
+        Helper function for rendering.
+        :param color_channel: Point channel to use as color.
+        :param ax: Axes on which to render the points.
+        :param view: <np.float: n, n>. Defines an arbitrary projection (n <= 4).
+        :param x_lim: (min, max).
+        :param y_lim: (min, max).
+        :param marker_size: Marker size.
+        """
+        if render_lidar_pts:
+            points = view_points(self.points[:3, :], view, normalize=False)
+            ax.scatter(points[0, :], points[1, :], color=(0,0,0,0.5), s=marker_size/4)
+        
+        if inlier_pts.shape[1]!=0:
+            in_pts3d = view_points(inlier_pts, view, normalize=False)
+            # print(in_pts3d)
+            
+            ax.scatter(in_pts3d[0, :], in_pts3d[1, :], color=inlier_color, s=marker_size*2, label='inlier points')
+
+
+        if outlier_pts is not None:
+            if outlier_pts.shape[1]!=0:
+                out_pts3d = view_points(outlier_pts, view, normalize=False)
+                # print(out_pts3d)
+                ax.scatter(out_pts3d[0, :], out_pts3d[1, :], color=outlier_color, s=marker_size*2, label='outlier_points')
+
         ax.set_xlim(x_lim[0], x_lim[1])
         ax.set_ylim(y_lim[0], y_lim[1])
 

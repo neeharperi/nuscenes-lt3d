@@ -129,6 +129,7 @@ def class_pr_curve(md_list: DetectionMetricDataList,
     data = md_list.get_class_data(detection_name)
 
     # Plot the recall vs. precision curve for each distance threshold.
+    import ipdb; ipdb.set_trace()
     for md, dist_th, semantic_th in data:
         md: DetectionMetricData
         ap = metrics.get_label_ap(detection_name, dist_th, semantic_th)

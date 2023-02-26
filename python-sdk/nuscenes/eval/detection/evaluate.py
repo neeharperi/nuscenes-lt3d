@@ -108,8 +108,10 @@ class DetectionEval:
         self.metric = metric
 
         # Check result file exists.
+        # import ipdb; ipdb.set_trace()
+        # if type(result_path[1])
         assert os.path.exists(result_path), 'Error: The result file does not exist!'
-
+ 
         # Make dirs.
         self.plot_dir = os.path.join(self.output_dir, 'plots')
         if not os.path.isdir(self.output_dir):
@@ -123,7 +125,7 @@ class DetectionEval:
         self.pred_boxes, self.meta = load_prediction(self.result_path, self.cfg.max_boxes_per_sample, DetectionBox,
                                                      verbose=verbose)
         self.gt_boxes = load_gt(self.nusc, self.eval_set, DetectionBox, verbose=verbose)
-
+        # import ipdb; ipdb.set_trace()
         assert set(self.pred_boxes.sample_tokens) == set(self.gt_boxes.sample_tokens), \
             "Samples in split doesn't match samples in predictions."
 
