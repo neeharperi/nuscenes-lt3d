@@ -531,7 +531,7 @@ class NuScenes:
                                                  lidarseg_preds_bin_path=lidarseg_preds_bin_path,
                                                  show_panoptic=show_panoptic)
 
-    def render_pointcloud_in_image_new_pts(self, sample_token: str, lidar_pts, display_viz: bool=True, dot_size: int = 5, pointsensor_channel: str = 'LIDAR_TOP',
+    def render_pointcloud_in_image_new_pts(self, sample_token: str, lidar_pts, lidar_pcl= None, display_viz: bool=True, dot_size: int = 5, pointsensor_channel: str = 'LIDAR_TOP',
                                    camera_channel: str = 'CAM_FRONT', out_path: str = None,
                                    render_intensity: bool = False,
                                    show_lidarseg: bool = False,
@@ -540,7 +540,7 @@ class NuScenes:
                                    verbose: bool = True,
                                    lidarseg_preds_bin_path: str = None,
                                    show_panoptic: bool = False) -> None:
-         return self.explorer.render_pointcloud_in_image_new_pts(sample_token, lidar_pts, display_viz, dot_size, pointsensor_channel=pointsensor_channel,
+         return self.explorer.render_pointcloud_in_image_new_pts(sample_token, lidar_pts, lidar_pcl, display_viz, dot_size, pointsensor_channel=pointsensor_channel,
                                                  camera_channel=camera_channel, out_path=out_path,
                                                  render_intensity=render_intensity,
                                                  show_lidarseg=show_lidarseg,
@@ -992,6 +992,7 @@ class NuScenesExplorer:
 
     def map_pointcloud_to_image_new_pts(self,
                                 lidar_pts,
+                                lidar_pcl,
                                 pointsensor_token: str,
                                 camera_token: str,
                                 min_dist: float = 1.0,
@@ -1032,9 +1033,12 @@ class NuScenesExplorer:
 
                 assert not render_intensity, 'Error: Invalid options selected. You can only select either ' \
                                              'render_intensity or show_lidarseg, not both.'
-
-            pc = LidarPointCloud.from_file(pcl_path)
-            print(pcl_path)
+            if lidar_pcl is not None:
+                pc = lidar_pcl
+                # import ipdb; ipdb.set_trace()
+            else:
+                pc = LidarPointCloud.from_file(pcl_path)
+            # print(pcl_path)
             pc.points = lidar_pts
         else:
             pc = RadarPointCloud.from_file(pcl_path)
@@ -1226,6 +1230,7 @@ class NuScenesExplorer:
     def render_pointcloud_in_image_new_pts(self,
                                    sample_token: str,
                                    lidar_pts,
+                                   lidar_pcl = None, 
                                    display_viz: bool = True,
                                    dot_size: int = 5,
                                    pointsensor_channel: str = 'LIDAR_TOP',
@@ -1267,7 +1272,7 @@ class NuScenesExplorer:
         pointsensor_token = sample_record['data'][pointsensor_channel]
         camera_token = sample_record['data'][camera_channel]
         # import ipdb; ipdb.set_trace()
-        points, coloring, im ,orig_points, mask = self.map_pointcloud_to_image_new_pts(lidar_pts, pointsensor_token, camera_token,
+        points, coloring, im ,orig_points, mask = self.map_pointcloud_to_image_new_pts(lidar_pts, lidar_pcl, pointsensor_token, camera_token,
                                                             render_intensity=render_intensity,
                                                             show_lidarseg=show_lidarseg,
                                                             filter_lidarseg_labels=filter_lidarseg_labels,
