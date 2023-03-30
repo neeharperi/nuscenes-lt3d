@@ -729,6 +729,143 @@ class NuImages:
             plt.savefig(out_path, bbox_inches='tight', dpi=2.295 * pix_to_inch, pad_inches=0)
             plt.close()
 
+    def render_image2(self,
+                     sd_token: str,
+                     annotation_type: str = 'all',
+                     with_category: bool = False,
+                     with_attributes: bool = False,
+                     object_tokens: List[str] = None,
+                     surface_tokens: List[str] = None,
+                     object_cats : List[int] = None,
+                     render_scale: float = 1.0,
+                     box_line_width: int = -1,
+                     font_size: int = None,
+                     out_path: str = None) -> None:
+        """
+        Renders an image (sample_data), optionally with annotations overlaid.
+        :param sd_token: The token of the sample_data to be rendered.
+        :param annotation_type: The types of annotations to draw on the image; there are four options:
+            'all': Draw surfaces and objects, subject to any filtering done by object_tokens and surface_tokens.
+            'surfaces': Draw only surfaces, subject to any filtering done by surface_tokens.
+            'objects': Draw objects, subject to any filtering done by object_tokens.
+            'none': Neither surfaces nor objects will be drawn.
+        :param with_category: Whether to include the category name at the top of a box.
+        :param with_attributes: Whether to include attributes in the label tags. Note that with_attributes=True
+            will only work if with_category=True.
+        :param object_tokens: List of object annotation tokens. If given, only these annotations are drawn.
+        :param surface_tokens: List of surface annotation tokens. If given, only these annotations are drawn.
+        :param object_cats: List of object category ids. If given, only these annotations are drawn. Use this instead of object tokens
+        :param render_scale: The scale at which the image will be rendered. Use 1.0 for the original image size.
+        :param box_line_width: The box line width in pixels. The default is -1.
+            If set to -1, box_line_width equals render_scale (rounded) to be larger in larger images.
+        :param font_size: Size of the text in the rendered image. Use None for the default size.
+        :param out_path: The path where we save the rendered image, or otherwise None.
+            If a path is provided, the plot is not shown to the user.
+        """
+        class_mapping = {'human.pedestrian.adult': 8, 'human.pedestrian.child': 9, 'human.pedestrian.construction_worker': 11, 'human.pedestrian.personal_mobility': 12, 'human.pedestrian.police_officer': 10,
+                 'human.pedestrian.stroller': 14, 'human.pedestrian.wheelchair': 13, 'movable_object.barrier': 16, 'movable_object.debris': 18, 'movable_object.pushable_pullable': 15, 'movable_object.trafficcone': 17,
+                 'static_object.bicycle_rack': 7, 'vehicle.bicycle': 7, 'vehicle.bus.bendy': 3, 'vehicle.bus.rigid': 3, 'vehicle.car': 0, 'vehicle.construction': 2, 'vehicle.emergency.ambulance': 5, 
+                 'vehicle.emergency.police': 5, 'vehicle.motorcycle': 6, 'vehicle.trailer': 4, 'vehicle.truck': 1 }
+        
+        # Validate inputs.
+        sample_data = self.get('sample_data', sd_token)
+        if not sample_data['is_key_frame']:
+            assert annotation_type == 'none', 'Error: Cannot render annotations for non keyframes!'
+            assert not with_attributes, 'Error: Cannot render attributes for non keyframes!'
+        if with_attributes:
+            assert with_category, 'In order to set with_attributes=True, with_category must be True.'
+        assert type(box_line_width) == int, 'Error: box_line_width must be an integer!'
+        if box_line_width == -1:
+            box_line_width = int(round(render_scale))
+
+        # Get image data.
+        self.check_sweeps(sample_data['filename'])
+        im_path = osp.join(self.dataroot, sample_data['filename'])
+        im = Image.open(im_path)
+
+        # Initialize drawing.
+        if with_category and font_size is not None:
+            font = get_font(font_size=font_size)
+        else:
+            font = None
+        im = im.convert('RGBA')
+        draw = ImageDraw.Draw(im, 'RGBA')
+
+        annotations_types = ['all', 'surfaces', 'objects', 'none']
+        assert annotation_type in annotations_types, \
+            'Error: {} is not a valid option for annotation_type. ' \
+            'Only {} are allowed.'.format(annotation_type, annotations_types)
+        if annotation_type is not 'none':
+            if annotation_type == 'all' or annotation_type == 'surfaces':
+                # Load stuff / surface regions.
+                surface_anns = [o for o in self.surface_ann if o['sample_data_token'] == sd_token]
+                if surface_tokens is not None:
+                    sd_surface_tokens = set([s['token'] for s in surface_anns if s['token']])
+                    assert set(surface_tokens).issubset(sd_surface_tokens), \
+                        'Error: The provided surface_tokens do not belong to the sd_token!'
+                    surface_anns = [o for o in surface_anns if o['token'] in surface_tokens]
+
+                # Draw stuff / surface regions.
+                for ann in surface_anns:
+                    # Get color and mask.
+                    category_token = ann['category_token']
+                    category_name = self.get('category', category_token)['name']
+                    color = self.color_map[category_name]
+                    if ann['mask'] is None:
+                        continue
+                    mask = mask_decode(ann['mask'])
+
+                    # Draw mask. The label is obvious from the color.
+                    draw.bitmap((0, 0), Image.fromarray(mask * 128), fill=tuple(color + (128,)))
+
+            if annotation_type == 'all' or annotation_type == 'objects':
+                # Load object instances.
+                object_anns = [o for o in self.object_ann if o['sample_data_token'] == sd_token]
+                object_ann_cats = [class_mapping[self.get('category', o['category_token'])['name']] for o in object_anns]
+
+                # if object_tokens is not None:
+                #     sd_object_tokens = set([o['token'] for o in object_anns if o['token']])
+                #     assert set(object_tokens).issubset(sd_object_tokens), \
+                #         'Error: The provided object_tokens do not belong to the sd_token!'
+                #     object_anns = [o for o in object_anns if o['token'] in object_tokens]
+
+                if object_cats is not None:
+                    object_anns = [object_anns[idx] for idx, o in enumerate(object_ann_cats) if o in object_cats]
+                    # object_anns = [object_anns for o in object_anns if o['token'] in object_tokens]
+
+                # Draw object instances.
+                for ann in object_anns:
+                    # Get color, box, mask and name.
+                    category_token = ann['category_token']
+                    category_name = self.get('category', category_token)['name']
+                    color = self.color_map[category_name]
+                    bbox = ann['bbox']
+                    attr_tokens = ann['attribute_tokens']
+                    attributes = [self.get('attribute', at) for at in attr_tokens]
+                    name = annotation_name(attributes, category_name, with_attributes=with_attributes)
+                    if ann['mask'] is not None:
+                        mask = mask_decode(ann['mask'])
+
+                        # Draw mask, rectangle and text.
+                        draw.bitmap((0, 0), Image.fromarray(mask * 128), fill=tuple(color + (128,)))
+                        draw.rectangle(bbox, outline=color, width=box_line_width)
+                        if with_category:
+                            draw.text((bbox[0], bbox[1]), name, font=font)
+
+        # Plot the image.
+        (width, height) = im.size
+        pix_to_inch = 100 / render_scale
+        figsize = (height / pix_to_inch, width / pix_to_inch)
+        plt.figure(figsize=figsize)
+        plt.axis('off')
+        plt.imshow(im)
+
+        # Save to disk.
+        if out_path is not None:
+            plt.savefig(out_path, bbox_inches='tight', dpi=2.295 * pix_to_inch, pad_inches=0)
+            plt.close()
+
+
     def render_trajectory(self,
                           sample_token: str,
                           rotation_yaw: float = 0.0,
