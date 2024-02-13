@@ -13,7 +13,7 @@ import numpy as np
 from nuscenes import NuScenes
 from nuscenes.eval.common.config import config_factory
 from nuscenes.eval.common.data_classes import EvalBoxes
-from nuscenes.eval.common.loaders import load_prediction, load_gt, add_center_dist, filter_eval_boxes
+from nuscenes.eval.common.loaders import load_prediction, load_gt, load_gt_one_class, add_center_dist, filter_eval_boxes
 from nuscenes.eval.detection.algo import accumulate, calc_ap, calc_tp
 from nuscenes.eval.detection.constants import TP_METRICS
 from nuscenes.eval.detection.data_classes import DetectionConfig, DetectionMetrics, DetectionBox, \
@@ -124,8 +124,14 @@ class DetectionEval:
             print('Initializing nuScenes detection evaluation')
         self.pred_boxes, self.meta = load_prediction(self.result_path, self.cfg.max_boxes_per_sample, DetectionBox,
                                                      verbose=verbose)
-        self.gt_boxes = load_gt(self.nusc, self.eval_set, DetectionBox, verbose=verbose)
         # import ipdb; ipdb.set_trace()
+        print('Stop')
+
+        ### enable for 1 class evaluation
+        # self.convert_preds_to_one_class()
+        # self.gt_boxes = load_gt_one_class(self.nusc, self.eval_set, DetectionBox, verbose=verbose)
+
+        self.gt_boxes = load_gt(self.nusc, self.eval_set, DetectionBox, verbose=verbose)
         assert set(self.pred_boxes.sample_tokens) == set(self.gt_boxes.sample_tokens), \
             "Samples in split doesn't match samples in predictions."
 
@@ -134,6 +140,7 @@ class DetectionEval:
         self.gt_boxes = add_center_dist(nusc, self.gt_boxes)
 
         # Filter boxes (distance, points per box, etc.).
+        # import ipdb; ipdb.set_trace()
         if verbose:
             print('Filtering predictions')
         self.pred_boxes = filter_eval_boxes(nusc, self.pred_boxes, self.cfg.class_range, verbose=verbose)
@@ -162,6 +169,14 @@ class DetectionEval:
 
             filename = self.output_dir + "/conf_acc.csv"
             acc_dataFrame.to_csv(filename)
+
+    def convert_preds_to_one_class(self):
+        eval_boxes = self.pred_boxes
+        for ind, sample_token in enumerate(eval_boxes.sample_tokens):
+            for idx in range(len(self.pred_boxes[sample_token])):
+                self.pred_boxes[sample_token][idx].detection_name = 'car'
+            # import ipdb; ipdb.set_trace()
+
 
     def evaluate(self) -> Tuple[DetectionMetrics, DetectionMetricDataList]:
         """
